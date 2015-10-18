@@ -81,16 +81,57 @@
     };
 
     if (self.isHijackingClicks) {
+      var maxClickDistance = 6;
       self.handler('click', {
         options: {
-          maxDistance: 6
+          maxDistance: maxClickDistance
         },
-        onEnd: function (ev, pointer) {
+        onEnd: checkDistanceAndEmit('click')
+      });
+
+      self.handler('focus', {
+        options: {
+          maxDistance: maxClickDistance
+        },
+        onEnd: function(ev, pointer) {
           if (pointer.distance < this.state.options.maxDistance) {
-            this.dispatchEvent(ev, 'click');
+            if (canFocus(ev.target)) {
+              this.dispatchEvent(ev, 'focus', pointer);
+              ev.target.focus();
+            }
+          }
+
+          function canFocus(element) {
+            var focusableElements = ['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA', 'VIDEO', 'AUDIO'];
+
+            return (element.getAttribute('tabindex') != '-1') &&
+                !element.hasAttribute('DISABLED') &&
+                (element.hasAttribute('tabindex') || element.hasAttribute('href') ||
+                (focusableElements.indexOf(element.nodeName) != -1));
           }
         }
       });
+
+      self.handler('mouseup', {
+        options: {
+          maxDistance: maxClickDistance
+        },
+        onEnd: checkDistanceAndEmit('mouseup')
+      });
+
+      self.handler('mousedown', {
+        onStart: function(ev) {
+          this.dispatchEvent(ev, 'mousedown');
+        }
+      });
+    }
+
+    function checkDistanceAndEmit(eventName) {
+      return function(ev, pointer) {
+        if (pointer.distance < this.state.options.maxDistance) {
+          this.dispatchEvent(ev, eventName, pointer);
+        }
+      };
     }
 
     /*
@@ -407,10 +448,10 @@
       eventPointer = eventPointer || pointer;
       var eventObj;
 
-      if (eventType === 'click') {
+      if (eventType === 'click' || eventType == 'mouseup' || eventType == 'mousedown' ) {
         eventObj = document.createEvent('MouseEvents');
         eventObj.initMouseEvent(
-          'click', true, true, window, srcEvent.detail,
+          eventType, true, true, window, srcEvent.detail,
           eventPointer.x, eventPointer.y, eventPointer.x, eventPointer.y,
           srcEvent.ctrlKey, srcEvent.altKey, srcEvent.shiftKey, srcEvent.metaKey,
           srcEvent.button, srcEvent.relatedTarget || null
@@ -452,23 +493,38 @@
        *  - click events sent by the keyboard (eg form submit)
        *  - events that originate from an Ionic app
        */
-      document.addEventListener('click', function clickHijacker(ev) {
-        var isKeyClick = ev.clientX === 0 && ev.clientY === 0;
-        if (!isKeyClick && !ev.$material && !ev.isIonicTap
-            && !isInputEventFromLabelClick(ev)) {
-          ev.preventDefault();
-          ev.stopPropagation();
-          lastLabelClickPos = null;
-        } else {
-          lastLabelClickPos = null;
-          if (ev.target.tagName.toLowerCase() == 'label') {
-            lastLabelClickPos = {x: ev.x, y: ev.y};
-          }
-        }
-      }, true);
-      
+      document.addEventListener('click'    , clickHijacker     , true);
+      document.addEventListener('mouseup'  , mouseInputHijacker, true);
+      document.addEventListener('mousedown', mouseInputHijacker, true);
+      document.addEventListener('focus'    , mouseInputHijacker, true);
+
       isInitialized = true;
     }
+
+    function mouseInputHijacker(ev) {
+      var isKeyClick = !ev.clientX && !ev.clientY;
+      if (!isKeyClick && !ev.$material && !ev.isIonicTap
+        && !isInputEventFromLabelClick(ev)) {
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
+    }
+
+    function clickHijacker(ev) {
+      var isKeyClick = ev.clientX === 0 && ev.clientY === 0;
+      if (!isKeyClick && !ev.$material && !ev.isIonicTap
+        && !isInputEventFromLabelClick(ev)) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        lastLabelClickPos = null;
+      } else {
+        lastLabelClickPos = null;
+        if (ev.target.tagName.toLowerCase() == 'label') {
+          lastLabelClickPos = {x: ev.x, y: ev.y};
+        }
+      }
+    }
+
 
     // Listen to all events to cover all platforms.
     var START_EVENTS = 'mousedown touchstart pointerdown';
