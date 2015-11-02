@@ -205,6 +205,10 @@
     this.isDisabled;
     this.setDisabled($element[0].disabled || angular.isString($attrs['disabled']));
 
+    /** @type {boolean} */
+    this.isReadonly;
+    this.setReadonly($element[0].readonly || angular.isString($attrs['readonly']));
+
     /** @type {boolean} Whether the date-picker's calendar pane is open. */
     this.isCalendarOpen = false;
 
@@ -333,13 +337,23 @@
   };
 
   /**
-   * Sets whether the date-picker is disabled.
+   * Sets whether the datepicker is disabled.
    * @param {boolean} isDisabled
    */
   DatePickerCtrl.prototype.setDisabled = function(isDisabled) {
     this.isDisabled = isDisabled;
     this.inputElement.disabled = isDisabled;
     this.calendarButton.disabled = isDisabled;
+  };
+
+  /**
+   * Sets whether the datepicker is readonly.
+   * @param {boolean} isReadonly
+   */
+  DatePickerCtrl.prototype.setReadonly = function(isReadonly) {
+    this.isReadonly = isReadonly;
+    this.inputElement.readOnly = isReadonly;
+    this.calendarButton.isDisabled = isReadonly;
   };
 
   /**

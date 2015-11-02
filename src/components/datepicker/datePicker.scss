@@ -142,7 +142,8 @@ $md-date-arrow-size: 5px;
 }
 
 // Disabled state for all elements of the picker.
-md-datepicker[disabled] {
+md-datepicker[disabled],
+md-datepicker[readonly] {
   .md-datepicker-input-container {
     border-bottom-color: transparent;
   }

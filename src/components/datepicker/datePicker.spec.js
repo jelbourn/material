@@ -16,6 +16,7 @@ describe('md-date-picker', function() {
          'md-min-date="minDate" ' +
          'ng-model="myDate" ' +
          'ng-required="isRequired" ' +
+         'ng-readonly="isReadonly" ' +
          'ng-disabled="isDisabled">' +
     '</md-datepicker>';
 
@@ -39,6 +40,7 @@ describe('md-date-picker', function() {
     pageScope = $rootScope.$new();
     pageScope.myDate = initialDate;
     pageScope.isDisabled = false;
+    pageScope.isReadonly = false;
 
     createDatepickerInstance(DATEPICKER_TEMPLATE);
     controller.closeCalendarPane();
@@ -91,6 +93,19 @@ describe('md-date-picker', function() {
     expect(controller.inputElement.disabled).toBe(true);
     expect(controller.calendarButton.disabled).toBe(true);
   });
+
+  it('should make readonly the internal inputs based on ng-readonly binding', function() {
+    expect(controller.inputElement.readOnly).toBe(false);
+    expect(controller.calendarButton.disabled).toBe(false);
+
+    pageScope.isReadonly = true;
+    pageScope.$apply();
+
+    expect(controller.inputElement.readOnly).toBe(true);
+    expect(controller.calendarButton.disabled).toBe(true);
+  });
+
+
 
   it('should update the internal input placeholder', function() {
     expect(controller.inputElement.placeholder).toBeFalsy();
