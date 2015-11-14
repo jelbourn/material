@@ -597,7 +597,10 @@ function InterimElementProvider() {
          */
         function showElement(element, options, controller) {
           // Trigger onComplete callback when the `show()` finishes
+          var notifyShowing = options.onShowing || angular.noop;
           var notifyComplete = options.onComplete || angular.noop;
+
+          notifyShowing(options.scope, element, options, controller);
 
           return $q(function (resolve, reject) {
             try {
